@@ -127,9 +127,9 @@ def main():
 
     org, long, short = read_files()
     normalized_param = max(org[1].max(), abs(org[1].min()))
-    # train_model(org, window_size, batch_size, shuffle_size, normalized_param)
-    model = load_model()
-    nn(org[:60000], long[:60000], short[:60000], model, window_size, normalized_param)
+    train_model(org, window_size, batch_size, shuffle_size, normalized_param)
+    # model = load_model()
+    # nn(org[:60000], long[:60000], short[:60000], model, window_size, normalized_param)
 
 
 if __name__ == '__main__':
