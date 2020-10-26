@@ -1,20 +1,9 @@
-# import pandas as pd
-# import numpy as np
-#
-# df = pd.read_csv("train.csv")
-# df['comment_text'] = df['comment_text'].str.lower()
-# pass
-
 import tensorflow as tf
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-# from keras.layers import Dense, LSTM, Embedding, Dropout, Activation
-# from keras.layers import Bidirectional, GlobalMaxPool1D
-# from keras.models import Model
-# from keras import initializers, regularizers, constraints, optimizers, layers
 
 
 def load_csv():
@@ -32,8 +21,26 @@ def plot_graphs(history, string):
     plt.show()
 
 
-# plot_graphs(history, "accuracy")
-# plot_graphs(history, "loss")
+def save_model(model):
+    model_json = model.to_json()
+    with open("model.json", "w") as json_file:
+        json_file.write(model_json)
+
+    model.save_weights("model.h5")
+    print("Saved model to disk")
+
+
+def load_model():
+    # load json and create model
+    json_file = open('model.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = tf.keras.models.model_from_json(loaded_model_json)
+    # load weights into new model
+    loaded_model.load_weights("model.h5")
+    print("Loaded model from disk")
+
+    return loaded_model
 
 
 def main():
@@ -47,6 +54,7 @@ def main():
     classes = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
     train_labels = train[classes].values
     test_labels = pd.read_csv('test_labels.csv')[classes].values
+    test_labels = (test_labels == 1).astype(int)
     list_sentences_train = train["comment_text"]
     list_sentences_test = test["comment_text"]
 
@@ -60,7 +68,6 @@ def main():
 
     model = tf.keras.Sequential([
         tf.keras.layers.Embedding(max_words, embedding_dim, input_length=max_length),
-        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True)),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32)),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(32, activation='relu'),
@@ -70,8 +77,10 @@ def main():
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.summary()
 
-    num_epochs = 3
-    history = model.fit(list_tokenized_train, train_labels, epochs=num_epochs, validation_data=(list_tokenized_test, test_labels))
+    num_epochs = 10
+    history = model.fit(list_tokenized_train, train_labels, epochs=num_epochs, validation_split=0.05)
+
+    save_model(model)
 
     plot_graphs(history, "accuracy")
     plot_graphs(history, "loss")
