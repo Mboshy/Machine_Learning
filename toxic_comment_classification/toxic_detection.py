@@ -47,16 +47,19 @@ def main():
     max_length = 120
     oov_tok = "<OOV>"
     max_words = 20000
-    embedding_dim = 64
+    embedding_dim = 16
 
     train, test = load_csv()
 
     classes = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
     train_labels = train[classes].values
-    test_labels = pd.read_csv('test_labels.csv')[classes].values
-    test_labels = (test_labels == 1).astype(int)
     list_sentences_train = train["comment_text"]
-    list_sentences_test = test["comment_text"]
+
+    test_labels = pd.read_csv('test_labels.csv')
+    list_sentences_test = pd.merge(test, test_labels, on='id')
+    list_sentences_test = list_sentences_test[list_sentences_test['toxic'] != -1]
+    test_labels = list_sentences_test[classes].values
+    list_sentences_test = list_sentences_test["comment_text"]
 
     tokenizer = Tokenizer(num_words=max_words, oov_token=oov_tok)
     tokenizer.fit_on_texts(list(list_sentences_train))
@@ -65,6 +68,7 @@ def main():
 
     list_tokenized_train = pad_sequences(list_tokenized_train, maxlen=max_length, truncating='post')
     list_tokenized_test = pad_sequences(list_tokenized_test, maxlen=max_length, truncating='post')
+
 
     model = tf.keras.Sequential([
         tf.keras.layers.Embedding(max_words, embedding_dim, input_length=max_length),
@@ -77,8 +81,11 @@ def main():
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.summary()
 
-    num_epochs = 10
+    num_epochs = 2
     history = model.fit(list_tokenized_train, train_labels, epochs=num_epochs, validation_split=0.05)
+
+    print("Evaluation results on test set:")
+    model.evaluate(list_tokenized_test, test_labels)
 
     save_model(model)
 
