@@ -69,7 +69,6 @@ def main():
     list_tokenized_train = pad_sequences(list_tokenized_train, maxlen=max_length, truncating='post')
     list_tokenized_test = pad_sequences(list_tokenized_test, maxlen=max_length, truncating='post')
 
-
     model = tf.keras.Sequential([
         tf.keras.layers.Embedding(max_words, embedding_dim, input_length=max_length),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32)),
