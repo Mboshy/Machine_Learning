@@ -88,6 +88,9 @@ def main():
 
     save_model(model)
 
+    # model = load_model()
+    # model.predict(list_tokenized_test[:10])
+
     plot_graphs(history, "accuracy")
     plot_graphs(history, "loss")
 
